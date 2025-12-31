@@ -4,14 +4,23 @@ using TMPro;
 
 public class HydraulicPressController : MonoBehaviour
 {
+    // 🔹 Machine States
+    public enum PressState
+    {
+        Running,
+        Stopped,
+        Fault
+    }
+
+    public PressState currentState;   // 👈 current state
+
     [Header("Piston Movement")]
     public Transform piston;
     public float pressSpeed = 0.5f;
-    public float pressDistance = 0.8f;     // 👈 nee define panna alavu
+    public float pressDistance = 0.8f;
     public Vector3 pressDirection = Vector3.down;
 
     private Vector3 pistonStartPos;
-    private bool isRunning = false;
     private bool movePiston = false;
 
     [Header("Fault")]
@@ -25,14 +34,20 @@ public class HydraulicPressController : MonoBehaviour
 
     void Start()
     {
+        // ✅ Store home position
         pistonStartPos = piston.position;
+
         faultMat = faultRenderer.material;
         DisableEmission();
+
+        // ✅ INITIAL STATE
+        SetState(PressState.Stopped);
     }
 
     void Update()
     {
-        if (!isRunning || !movePiston) return;
+        if (currentState != PressState.Running || !movePiston)
+            return;
 
         float movedDistance =
             Vector3.Distance(pistonStartPos, piston.position);
@@ -46,55 +61,64 @@ public class HydraulicPressController : MonoBehaviour
         }
         else
         {
-            // Target reach aagiduchu
-            movePiston = false;
+            movePiston = false; // reach limit
         }
     }
 
     // ▶ RUN BUTTON
     public void RunPress()
     {
-        isRunning = true;
-        movePiston = true;
-        StopFault();
+        SetState(PressState.Running);
 
-        // Always start from top
         piston.position = pistonStartPos;
-
-        statusText.text = "Running";
+        movePiston = true;
     }
 
     // ⏹ STOP BUTTON
     public void StopPress()
     {
-        isRunning = false;
-        movePiston = false;
+        SetState(PressState.Stopped);
 
-        // Return piston to home (top)
         piston.position = pistonStartPos;
-
-        StopFault();
-        statusText.text = "Stopped";
+        movePiston = false;
     }
 
     // ⚠️ FAULT BUTTON
     public void FaultPress()
     {
-        isRunning = false;
-        movePiston = false;
+        SetState(PressState.Fault);
 
-        // Reset piston
         piston.position = pistonStartPos;
-
-        statusText.text = "Fault";
-
-        if (faultCoroutine != null)
-            StopCoroutine(faultCoroutine);
-
-        faultCoroutine = StartCoroutine(FaultBlink());
+        movePiston = false;
     }
 
-    // 🔁 Fault Blink Logic
+    // 🔁 CENTRAL STATE HANDLER (IMPORTANT)
+    void SetState(PressState newState)
+    {
+        currentState = newState;
+
+        // Stop everything first
+        movePiston = false;
+        StopFault();
+
+        switch (currentState)
+        {
+            case PressState.Running:
+                statusText.text = "Running";
+                break;
+
+            case PressState.Stopped:
+                statusText.text = "Stopped";
+                break;
+
+            case PressState.Fault:
+                statusText.text = "Fault";
+                faultCoroutine = StartCoroutine(FaultBlink());
+                break;
+        }
+    }
+
+    // 🔁 Fault Blink
     IEnumerator FaultBlink()
     {
         while (true)

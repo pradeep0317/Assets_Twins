@@ -4,10 +4,19 @@ using System.Collections;
 
 public class MotorController : MonoBehaviour
 {
+    // 🔹 Motor States
+    public enum MotorState
+    {
+        Running,
+        Stopped,
+        Fault
+    }
+
+    public MotorState currentState;   // 👈 current state
+
     [Header("Motor Settings")]
     public Transform shaft;
     public float rotationSpeed = 600f;
-    private bool isRunning = false;
 
     [Header("Fault Settings")]
     public Renderer faultPart;
@@ -22,42 +31,60 @@ public class MotorController : MonoBehaviour
     {
         faultMat = faultPart.material;
         DisableEmission();
+
+        // ✅ INITIAL STATE
+        SetState(MotorState.Stopped);
     }
 
     void Update()
     {
-        if (isRunning)
+        if (currentState == MotorState.Running)
         {
             shaft.Rotate(Vector3.forward * rotationSpeed * Time.deltaTime, Space.Self);
         }
     }
 
-    //  RUN
+    // ▶ RUN BUTTON
     public void RunMotor()
     {
-        isRunning = true;
-        StopFault();
-        statusText.text = "Running";
+        SetState(MotorState.Running);
     }
 
-    //  STOP
+    // ⏹ STOP BUTTON
     public void StopMotor()
     {
-        isRunning = false;
-        StopFault();
-        statusText.text = "Stopped";
+        SetState(MotorState.Stopped);
     }
 
-    // FAULT
+    // ⚠️ FAULT BUTTON
     public void FaultMotor()
     {
-        isRunning = false;
-        statusText.text = "Fault";
+        SetState(MotorState.Fault);
+    }
 
-        if (faultCoroutine != null)
-            StopCoroutine(faultCoroutine);
+    // 🔹 CENTRAL STATE HANDLER
+    void SetState(MotorState newState)
+    {
+        currentState = newState;
 
-        faultCoroutine = StartCoroutine(FaultGlowBlink());
+        // Reset common things
+        StopFault();
+
+        switch (currentState)
+        {
+            case MotorState.Running:
+                statusText.text = "Running";
+                break;
+
+            case MotorState.Stopped:
+                statusText.text = "Stopped";
+                break;
+
+            case MotorState.Fault:
+                statusText.text = "Fault";
+                faultCoroutine = StartCoroutine(FaultGlowBlink());
+                break;
+        }
     }
 
     IEnumerator FaultGlowBlink()
@@ -66,7 +93,6 @@ public class MotorController : MonoBehaviour
         {
             EnableEmission();
             yield return new WaitForSeconds(0.4f);
-
             DisableEmission();
             yield return new WaitForSeconds(0.4f);
         }

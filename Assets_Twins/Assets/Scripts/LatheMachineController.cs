@@ -5,6 +5,16 @@ using TMPro;
 
 public class LatheMachineController : MonoBehaviour
 {
+    // 🔹 Lathe States
+    public enum LatheState
+    {
+        Running,
+        Stopped,
+        Fault
+    }
+
+    public LatheState currentState;   // 👈 current state
+
     [Header("Spindle Rotation")]
     public bool rotateSpindle = false;
     public List<GameObject> rotatableObjects;
@@ -37,17 +47,19 @@ public class LatheMachineController : MonoBehaviour
 
     void Start()
     {
-        rotateSpindle = false;
         spindleMat = spindleRenderer.material;
         DisableEmission();
 
-        // ✅ HOME position store pannrom
+        // ✅ HOME position
         carriageStartPos = carriage.position;
+
+        // ✅ INITIAL STATE
+        SetState(LatheState.Stopped);
     }
 
     void FixedUpdate()
     {
-        // 🔁 Spindle rotation (your logic)
+        // 🔁 Spindle rotation
         if (rotateSpindle)
         {
             foreach (GameObject obj in rotatableObjects)
@@ -59,7 +71,8 @@ public class LatheMachineController : MonoBehaviour
 
     void Update()
     {
-        if (!isRunning) return;
+        if (currentState != LatheState.Running)
+            return;
 
         // 🎡 Handle rotation
         handlePivot.Rotate(handleSpeed * Time.deltaTime, 0f, 0f, Space.Self);
@@ -79,7 +92,7 @@ public class LatheMachineController : MonoBehaviour
             }
             else
             {
-                moveCarriage = false; // stop after distance
+                moveCarriage = false;
             }
         }
     }
@@ -87,16 +100,9 @@ public class LatheMachineController : MonoBehaviour
     // ▶ RUN
     public void RunMachine()
     {
-        isRunning = true;
-        moveCarriage = false;
-        StopFault();
+        SetState(LatheState.Running);
 
-        // ✅ Always start from HOME
         carriage.position = carriageStartPos;
-
-        rotateSpindle = true;
-        statusText.text = "Running";
-
         Invoke(nameof(StartCarriage), handleToCarriageDelay);
     }
 
@@ -108,33 +114,47 @@ public class LatheMachineController : MonoBehaviour
     // ⏹ STOP
     public void StopMachine()
     {
-        isRunning = false;
-        moveCarriage = false;
-        rotateSpindle = false;
+        SetState(LatheState.Stopped);
 
-        // ✅ RESET carriage to HOME
         carriage.position = carriageStartPos;
-
-        StopFault();
-        statusText.text = "Stopped";
     }
 
     // ⚠️ FAULT
     public void FaultMachine()
     {
+        SetState(LatheState.Fault);
+
+        carriage.position = carriageStartPos;
+    }
+
+    // 🔹 CENTRAL STATE HANDLER (IMPORTANT)
+    void SetState(LatheState newState)
+    {
+        currentState = newState;
+
+        // Reset everything first
         isRunning = false;
         moveCarriage = false;
         rotateSpindle = false;
+        StopFault();
 
-        // ✅ RESET carriage to HOME
-        carriage.position = carriageStartPos;
+        switch (currentState)
+        {
+            case LatheState.Running:
+                isRunning = true;
+                rotateSpindle = true;
+                statusText.text = "Running";
+                break;
 
-        statusText.text = "Fault";
+            case LatheState.Stopped:
+                statusText.text = "Stopped";
+                break;
 
-        if (faultCoroutine != null)
-            StopCoroutine(faultCoroutine);
-
-        faultCoroutine = StartCoroutine(SpindleBlink());
+            case LatheState.Fault:
+                statusText.text = "Fault";
+                faultCoroutine = StartCoroutine(SpindleBlink());
+                break;
+        }
     }
 
     IEnumerator SpindleBlink()
