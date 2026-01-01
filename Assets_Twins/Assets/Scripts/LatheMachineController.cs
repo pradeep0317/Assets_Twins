@@ -5,7 +5,6 @@ using TMPro;
 
 public class LatheMachineController : MonoBehaviour
 {
-    // 🔹 Lathe States
     public enum LatheState
     {
         Running,
@@ -57,7 +56,7 @@ public class LatheMachineController : MonoBehaviour
 
         carriageStartPos = carriage.position;
 
-        // ✅ INITIAL STATE
+        // INITIAL STATE
         SetState(LatheState.Stopped);
     }
 
@@ -98,7 +97,7 @@ public class LatheMachineController : MonoBehaviour
         }
     }
 
-    // ▶ RUN
+    //  RUN
     public void RunMachine()
     {
         SetState(LatheState.Running);
@@ -112,14 +111,14 @@ public class LatheMachineController : MonoBehaviour
         moveCarriage = true;
     }
 
-    // ⏹ STOP
+    // STOP
     public void StopMachine()
     {
         SetState(LatheState.Stopped);
         carriage.position = carriageStartPos;
     }
 
-    // ⚠️ FAULT
+    // FAULT
     public void FaultMachine()
     {
         SetState(LatheState.Fault);
@@ -149,7 +148,6 @@ public class LatheMachineController : MonoBehaviour
 
             case LatheState.Stopped:
                 statusText.text = "Stopped";
-                // ❌ No sound
                 break;
 
             case LatheState.Fault:
@@ -179,7 +177,7 @@ public class LatheMachineController : MonoBehaviour
         DisableEmission();
     }
 
-    // 🔊 AUDIO
+    // AUDIO
     void PlayRunningSound()
     {
         if (runningSound == null) return;
@@ -204,7 +202,7 @@ public class LatheMachineController : MonoBehaviour
         audioSource.loop = false;
     }
 
-    // 🔴 Emission
+    //  Emission
     void EnableEmission()
     {
         spindleMat.EnableKeyword("_EMISSION");

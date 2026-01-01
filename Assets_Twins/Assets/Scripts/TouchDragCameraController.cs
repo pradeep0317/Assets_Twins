@@ -23,7 +23,7 @@ public class TouchDragCameraController : MonoBehaviour
 
         Touch touch = Input.GetTouch(0);
 
-        // ✅ Ignore UI touches
+        // Ignore UI touches
         if (EventSystem.current != null &&
             EventSystem.current.IsPointerOverGameObject(touch.fingerId))
         {
@@ -42,7 +42,7 @@ public class TouchDragCameraController : MonoBehaviour
 
                 Vector2 delta = touch.position - startTouchPos;
 
-                // 🟢 LEFT HALF → MOVE
+                //  LEFT HALF  MOVE
                 if (startTouchPos.x < Screen.width / 2)
                 {
                     Vector3 move =
@@ -51,7 +51,7 @@ public class TouchDragCameraController : MonoBehaviour
 
                     transform.position += move * moveSpeed * Time.deltaTime;
                 }
-                // 🔵 RIGHT HALF → ROTATE
+                //  RIGHT HALF  ROTATE
                 else
                 {
                     float yaw = delta.x * rotateSensitivity;

@@ -7,11 +7,11 @@ public class CameraController : MonoBehaviour
     public float fastSpeed = 10f;
 
     [Header("Rotation (Keyboard Only)")]
-    public float rotateSpeed = 60f; // arrow key rotation speed
+    public float rotateSpeed = 60f; 
 
     void Update()
     {
-        // ⌨️ Movement
+        // Movement
         float speed = Input.GetKey(KeyCode.LeftShift) ? fastSpeed : moveSpeed;
 
         Vector3 move =
@@ -26,7 +26,7 @@ public class CameraController : MonoBehaviour
 
         transform.position += move * speed * Time.deltaTime;
 
-        // ⌨️ Rotation using arrow keys (optional)
+        // Rotation using arrow keys (optional)
         float rotateY = 0f;
 
         if (Input.GetKey(KeyCode.LeftArrow))

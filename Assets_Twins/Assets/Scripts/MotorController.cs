@@ -37,7 +37,7 @@ public class MotorController : MonoBehaviour
         faultMat = faultPart.material;
         DisableEmission();
 
-        // ✅ INITIAL STATE
+        // INITIAL STATE
         SetState(MotorState.Stopped);
     }
 
@@ -49,25 +49,25 @@ public class MotorController : MonoBehaviour
         }
     }
 
-    // ▶ RUN
+    //  RUN
     public void RunMotor()
     {
         SetState(MotorState.Running);
     }
 
-    // ⏹ STOP
+    // STOP
     public void StopMotor()
     {
         SetState(MotorState.Stopped);
     }
 
-    // ⚠️ FAULT
+    //  FAULT
     public void FaultMotor()
     {
         SetState(MotorState.Fault);
     }
 
-    // 🔹 CENTRAL STATE HANDLER
+    //  CENTRAL STATE HANDLER
     void SetState(MotorState newState)
     {
         // Stop previous effects
@@ -85,7 +85,6 @@ public class MotorController : MonoBehaviour
 
             case MotorState.Stopped:
                 statusText.text = "Stopped";
-                // ❌ No sound here
                 break;
 
             case MotorState.Fault:
@@ -96,7 +95,7 @@ public class MotorController : MonoBehaviour
         }
     }
 
-    // 🔁 Fault Blink
+    //  Fault Blink
     IEnumerator FaultGlowBlink()
     {
         while (true)
@@ -116,7 +115,7 @@ public class MotorController : MonoBehaviour
         DisableEmission();
     }
 
-    // 🔊 AUDIO
+    // AUDIO
     void PlayRunningSound()
     {
         if (runningSound == null) return;
@@ -141,7 +140,7 @@ public class MotorController : MonoBehaviour
         audioSource.loop = false;
     }
 
-    // 🔴 Emission
+    // Emission
     void EnableEmission()
     {
         faultMat.EnableKeyword("_EMISSION");
