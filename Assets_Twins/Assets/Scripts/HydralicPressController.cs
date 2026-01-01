@@ -12,7 +12,7 @@ public class HydraulicPressController : MonoBehaviour
         Fault
     }
 
-    public PressState currentState;   // 👈 current state
+    public PressState currentState;
 
     [Header("Piston Movement")]
     public Transform piston;
@@ -32,11 +32,14 @@ public class HydraulicPressController : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI statusText;
 
+    [Header("Audio")]
+    public AudioSource audioSource;
+    public AudioClip runOnceSound;   // 👈 one-shot
+    public AudioClip faultSound;     // 👈 loop
+
     void Start()
     {
-        // ✅ Store home position
         pistonStartPos = piston.position;
-
         faultMat = faultRenderer.material;
         DisableEmission();
 
@@ -61,11 +64,11 @@ public class HydraulicPressController : MonoBehaviour
         }
         else
         {
-            movePiston = false; // reach limit
+            movePiston = false;
         }
     }
 
-    // ▶ RUN BUTTON
+    // ▶ RUN
     public void RunPress()
     {
         SetState(PressState.Running);
@@ -74,7 +77,7 @@ public class HydraulicPressController : MonoBehaviour
         movePiston = true;
     }
 
-    // ⏹ STOP BUTTON
+    // ⏹ STOP
     public void StopPress()
     {
         SetState(PressState.Stopped);
@@ -83,7 +86,7 @@ public class HydraulicPressController : MonoBehaviour
         movePiston = false;
     }
 
-    // ⚠️ FAULT BUTTON
+    // ⚠️ FAULT
     public void FaultPress()
     {
         SetState(PressState.Fault);
@@ -92,19 +95,20 @@ public class HydraulicPressController : MonoBehaviour
         movePiston = false;
     }
 
-    // 🔁 CENTRAL STATE HANDLER (IMPORTANT)
+    // 🔹 CENTRAL STATE HANDLER
     void SetState(PressState newState)
     {
-        currentState = newState;
-
-        // Stop everything first
-        movePiston = false;
         StopFault();
+        StopAllSounds();
+
+        currentState = newState;
+        movePiston = false;
 
         switch (currentState)
         {
             case PressState.Running:
                 statusText.text = "Running";
+                PlayRunOnceSound();   // ✅ one-shot
                 break;
 
             case PressState.Stopped:
@@ -114,6 +118,7 @@ public class HydraulicPressController : MonoBehaviour
             case PressState.Fault:
                 statusText.text = "Fault";
                 faultCoroutine = StartCoroutine(FaultBlink());
+                PlayFaultSound();     // 🚨 loop
                 break;
         }
     }
@@ -138,6 +143,31 @@ public class HydraulicPressController : MonoBehaviour
         DisableEmission();
     }
 
+    // 🔊 AUDIO METHODS
+    void PlayRunOnceSound()
+    {
+        if (runOnceSound == null) return;
+
+        audioSource.loop = false;
+        audioSource.PlayOneShot(runOnceSound);
+    }
+
+    void PlayFaultSound()
+    {
+        if (faultSound == null) return;
+
+        audioSource.clip = faultSound;
+        audioSource.loop = true;
+        audioSource.Play();
+    }
+
+    void StopAllSounds()
+    {
+        audioSource.Stop();
+        audioSource.loop = false;
+    }
+
+    // 🔴 Emission
     void EnableEmission()
     {
         faultMat.EnableKeyword("_EMISSION");

@@ -13,7 +13,7 @@ public class LatheMachineController : MonoBehaviour
         Fault
     }
 
-    public LatheState currentState;   // 👈 current state
+    public LatheState currentState;
 
     [Header("Spindle Rotation")]
     public bool rotateSpindle = false;
@@ -40,6 +40,11 @@ public class LatheMachineController : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI statusText;
 
+    [Header("Audio")]
+    public AudioSource audioSource;
+    public AudioClip runningSound;
+    public AudioClip faultSound;
+
     private bool isRunning = false;
     private bool moveCarriage = false;
     private Coroutine faultCoroutine;
@@ -50,7 +55,6 @@ public class LatheMachineController : MonoBehaviour
         spindleMat = spindleRenderer.material;
         DisableEmission();
 
-        // ✅ HOME position
         carriageStartPos = carriage.position;
 
         // ✅ INITIAL STATE
@@ -59,7 +63,6 @@ public class LatheMachineController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // 🔁 Spindle rotation
         if (rotateSpindle)
         {
             foreach (GameObject obj in rotatableObjects)
@@ -74,10 +77,8 @@ public class LatheMachineController : MonoBehaviour
         if (currentState != LatheState.Running)
             return;
 
-        // 🎡 Handle rotation
         handlePivot.Rotate(handleSpeed * Time.deltaTime, 0f, 0f, Space.Self);
 
-        // ↔ Carriage movement with LIMIT
         if (moveCarriage)
         {
             float traveledDistance =
@@ -115,7 +116,6 @@ public class LatheMachineController : MonoBehaviour
     public void StopMachine()
     {
         SetState(LatheState.Stopped);
-
         carriage.position = carriageStartPos;
     }
 
@@ -123,20 +123,20 @@ public class LatheMachineController : MonoBehaviour
     public void FaultMachine()
     {
         SetState(LatheState.Fault);
-
         carriage.position = carriageStartPos;
     }
 
-    // 🔹 CENTRAL STATE HANDLER (IMPORTANT)
+    // 🔹 CENTRAL STATE HANDLER
     void SetState(LatheState newState)
     {
-        currentState = newState;
+        // Reset previous effects
+        StopFault();
+        StopAllSounds();
 
-        // Reset everything first
+        currentState = newState;
         isRunning = false;
         moveCarriage = false;
         rotateSpindle = false;
-        StopFault();
 
         switch (currentState)
         {
@@ -144,15 +144,18 @@ public class LatheMachineController : MonoBehaviour
                 isRunning = true;
                 rotateSpindle = true;
                 statusText.text = "Running";
+                PlayRunningSound();
                 break;
 
             case LatheState.Stopped:
                 statusText.text = "Stopped";
+                // ❌ No sound
                 break;
 
             case LatheState.Fault:
                 statusText.text = "Fault";
                 faultCoroutine = StartCoroutine(SpindleBlink());
+                PlayFaultSound();
                 break;
         }
     }
@@ -176,6 +179,32 @@ public class LatheMachineController : MonoBehaviour
         DisableEmission();
     }
 
+    // 🔊 AUDIO
+    void PlayRunningSound()
+    {
+        if (runningSound == null) return;
+
+        audioSource.clip = runningSound;
+        audioSource.loop = true;
+        audioSource.Play();
+    }
+
+    void PlayFaultSound()
+    {
+        if (faultSound == null) return;
+
+        audioSource.clip = faultSound;
+        audioSource.loop = true;
+        audioSource.Play();
+    }
+
+    void StopAllSounds()
+    {
+        audioSource.Stop();
+        audioSource.loop = false;
+    }
+
+    // 🔴 Emission
     void EnableEmission()
     {
         spindleMat.EnableKeyword("_EMISSION");

@@ -12,7 +12,7 @@ public class MotorController : MonoBehaviour
         Fault
     }
 
-    public MotorState currentState;   // 👈 current state
+    public MotorState currentState;
 
     [Header("Motor Settings")]
     public Transform shaft;
@@ -26,6 +26,11 @@ public class MotorController : MonoBehaviour
 
     [Header("UI")]
     public TextMeshProUGUI statusText;
+
+    [Header("Audio")]
+    public AudioSource audioSource;
+    public AudioClip runningSound;
+    public AudioClip faultSound;
 
     void Start()
     {
@@ -44,19 +49,19 @@ public class MotorController : MonoBehaviour
         }
     }
 
-    // ▶ RUN BUTTON
+    // ▶ RUN
     public void RunMotor()
     {
         SetState(MotorState.Running);
     }
 
-    // ⏹ STOP BUTTON
+    // ⏹ STOP
     public void StopMotor()
     {
         SetState(MotorState.Stopped);
     }
 
-    // ⚠️ FAULT BUTTON
+    // ⚠️ FAULT
     public void FaultMotor()
     {
         SetState(MotorState.Fault);
@@ -65,28 +70,33 @@ public class MotorController : MonoBehaviour
     // 🔹 CENTRAL STATE HANDLER
     void SetState(MotorState newState)
     {
-        currentState = newState;
-
-        // Reset common things
+        // Stop previous effects
         StopFault();
+        StopAllSounds();
+
+        currentState = newState;
 
         switch (currentState)
         {
             case MotorState.Running:
                 statusText.text = "Running";
+                PlayRunningSound();
                 break;
 
             case MotorState.Stopped:
                 statusText.text = "Stopped";
+                // ❌ No sound here
                 break;
 
             case MotorState.Fault:
                 statusText.text = "Fault";
                 faultCoroutine = StartCoroutine(FaultGlowBlink());
+                PlayFaultSound();
                 break;
         }
     }
 
+    // 🔁 Fault Blink
     IEnumerator FaultGlowBlink()
     {
         while (true)
@@ -106,6 +116,32 @@ public class MotorController : MonoBehaviour
         DisableEmission();
     }
 
+    // 🔊 AUDIO
+    void PlayRunningSound()
+    {
+        if (runningSound == null) return;
+
+        audioSource.clip = runningSound;
+        audioSource.loop = true;
+        audioSource.Play();
+    }
+
+    void PlayFaultSound()
+    {
+        if (faultSound == null) return;
+
+        audioSource.clip = faultSound;
+        audioSource.loop = true;
+        audioSource.Play();
+    }
+
+    void StopAllSounds()
+    {
+        audioSource.Stop();
+        audioSource.loop = false;
+    }
+
+    // 🔴 Emission
     void EnableEmission()
     {
         faultMat.EnableKeyword("_EMISSION");
